@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
 
+import openpyxl
 import pandas
 import requests
 
 from config import settings
+from helpers.style import width_column_product_list, width_column_product_info_list, width_column_product_description
 
 HELP_DICT = {
     '/v2/product/list': None,
@@ -22,7 +24,7 @@ HEADERS = {
 ITEMS_METHODS = ['/v2/product/list', '/v2/product/info/list', ]
 
 if __name__ == '__main__':
-    method = '/v2/product/list'
+    method = '/v1/product/info/description'
     body = HELP_DICT[method] if HELP_DICT[method] else None
     r = requests.post(f'https://{settings.host}{method}', headers=HEADERS, json=body)
     if method in ITEMS_METHODS:
@@ -34,7 +36,15 @@ if __name__ == '__main__':
     try:
         # Конвертация результата в Excel
         file_name = f'tables/{method.replace("/", "_")}_{datetime.today().strftime("%d_%m_%Y")}.xlsx'
-        pandas.DataFrame.from_dict(result).to_excel(file_name, engine='xlsxwriter')
+
+        pandas.DataFrame.from_dict(result).to_excel(file_name) if type(result) == list else \
+            pandas.DataFrame.from_dict([result]).to_excel(file_name)
+        if method == '/v2/product/list':
+            width_column_product_list(file_name)
+        elif method == '/v2/product/info/list':
+            width_column_product_info_list(file_name)
+        elif method == '/v1/product/info/description':
+            width_column_product_description(file_name)
         print('Successful conversion')
     except Exception as err:
         print(f'Get an Error: {err}')
