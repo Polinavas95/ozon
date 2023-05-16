@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
 
+import pandas
 import requests
-from openpyxl import load_workbook
-from openpyxl.utils import get_column_letter
-from pandas import json_normalize
 
 from config import settings
 
@@ -31,36 +29,13 @@ if __name__ == '__main__':
         result = r.json()['result']['items']
     else:
         result = r.json()['result']
-    print(result)
+    # print(result)
 
     try:
         # Конвертация результата в Excel
-        df = json_normalize(result)
         file_name = f'tables/{method.replace("/", "_")}_{datetime.today().strftime("%d_%m_%Y")}.xlsx'
-        df.to_excel(file_name)
+        pandas.DataFrame.from_dict(result).to_excel(file_name, engine='xlsxwriter')
         print('Successful conversion')
-
-        # Увеличение ширины колонок
-        wb = load_workbook(file_name)
-        ws = wb.active
-        # для строк
-        for i in range(1, ws.max_row + 1):
-            # если высота строки не изменялась программно
-            # или вручную то `rh` будет присваиваться `None`
-            rh = ws.row_dimensions[i].height
-            # по умолчанию высота строки равна 15 единицам
-            row_heights = 15 if rh is None else rh
-            # print(f'Строка {i} имеет высоту {row_heights}')
-
-        # для колонок
-        for i in range(1, ws.max_column + 1):
-            # преобразовываем индекс столбца в его букву
-            letter = get_column_letter(i)
-            # получаем ширину столбца
-            col_width = ws.column_dimensions[letter].width
-            # print(f'Столбец {letter} имеет ширину {col_width}')
-
-        print('Successful cell formatting')
     except Exception as err:
         print(f'Get an Error: {err}')
 
