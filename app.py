@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
 
-import pandas as pandas
 import requests
 from pandas import json_normalize
 
@@ -20,17 +19,21 @@ HEADERS = {
     'Content-Type': 'application/json'
 }
 
+ITEMS_METHODS = ['/v2/product/list', '/v2/product/info/list', ]
+
 if __name__ == '__main__':
     method = '/v2/product/list'
     body = HELP_DICT[method] if HELP_DICT[method] else None
     r = requests.post(f'https://{settings.host}{method}', headers=HEADERS, json=body)
-    result = r.json()['result']['items']
+    if method in ITEMS_METHODS:
+        result = r.json()['result']['items']
+    else:
+        result = r.json()['result']
     print(result)
-    df = json_normalize(result)
-    df.to_excel(f'tables/{method}_{datetime.today().strftime("%d_%m_%Y")}.xlsx')
     # Конвертация результата в Excel
-    # pandas.read_json(r.json()).to_excel(f'tables/{method}_{datetime.today().strftime("%d_%m_%Y")}.xlsx')
-    # print('Successful conversion')
+    df = json_normalize(result)
+    df.to_excel(f'tables/{method.replace("/", "_")}_{datetime.today().strftime("%d_%m_%Y")}.xlsx', engine='xlsxwriter')
+    print('Successful conversion')
 
 
 
